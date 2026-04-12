@@ -1,0 +1,24 @@
+{
+  "EU": {
+    "name": "EU",
+    "auth_realm": "https://b2c-login.toyota-europe.com/oauth2/realms/root/realms/alliance-subaru",
+    "api_base_url": "https://ctpa-oneapi.tceu-ctp-prd.toyotaconnectedeurope.io",
+    "client_id": "8c4921b0b08901fef389ce1af49c4e10.subaru.com",
+    "redirect_uri": "com.subaru.oneapp:/oauth2Callback",
+    "basic_auth": "OGM0OTIxYjBiMDg5MDFmZWYzODljZTFhZjQ5YzRlMTAuc3ViYXJ1LmNvbTpJaGNkcjV4YmhIYlRSMk9aOGdRa3YyNTZicmhTYjc=",
+    "api_key": "tTZipv6liF74PwMfk9Ed68AQ0bISswwf3iHQdqcF",
+    "brand": "S",
+    "region": "EU"
+  },
+  "NA": {
+    "name": "NA",
+    "auth_realm": "https://login.subarudriverslogin.com/oauth2/realms/root/realms/tmna-native",
+    "api_base_url": "https://oneapi.telematicsct.com",
+    "client_id": "oneappsdkclient",
+    "redirect_uri": "com.toyota.oneapp:/oauth2Callback",
+    "basic_auth": "b25lYXBwOm9uZWFwcA==",
+    "api_key": "tTZipv6liF74PwMfk9Ed68AQ0bISswwf3iHQdqcF",
+    "brand": "S",
+    "region": "NA"
+  }
+}

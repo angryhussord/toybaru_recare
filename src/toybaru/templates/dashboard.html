@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toybaru ReCare</title>
+<style>
+:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#c9d1d9;--muted:#8b949e;--primary:#58a6ff;--green:#3fb950;--yellow:#d29922;--red:#f85149;--blue:#58a6ff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.shell{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar h1{font-size:15px;font-weight:600;margin-right:auto}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0}
+.tab{padding:8px 16px;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--text);border-bottom-color:var(--primary)}
+.page{display:none;flex:1;overflow-y:auto;padding:20px}.page.active{display:block}
+select,input[type=date],input[type=text],input[type=email],input[type=password]{background:var(--surface);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:6px;font-size:13px;width:100%}
+.btn{background:var(--surface);color:var(--text);border:1px solid var(--border);padding:5px 14px;border-radius:6px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--muted)}.btn:disabled{opacity:.4;cursor:default}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn-primary:hover{opacity:.85}
+.btn-sm{padding:3px 8px;font-size:11px}
+.meta{color:var(--muted);font-size:12px}
+.row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}.row .k{color:var(--muted)}
+.section-title{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.error{color:var(--red);font-size:13px}
+.tag{font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid}
+.tag-ok{color:var(--green);border-color:#1a4731}.tag-warn{color:var(--red);border-color:#5c1a1a}
+.bat-pct{font-size:28px;font-weight:600;line-height:1.2}
+.bat-bar{width:100%;height:6px;background:var(--border);border-radius:3px;margin:6px 0 10px}
+.bat-fill{height:100%;border-radius:3px;transition:width .4s}
+.sbar{display:flex;height:6px;border-radius:3px;overflow:hidden}
+.sbar-eco{background:var(--green)}.sbar-reku{background:var(--blue)}.sbar-power{background:var(--red)}
+.sbar-legend{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-top:4px}
+.sbar-legend span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.leg-eco::before{background:var(--green)}.leg-reku::before{background:var(--blue)}.leg-power::before{background:var(--red)}
+table{width:100%;font-size:13px;border-collapse:separate;border-spacing:0}
+th{text-align:left;color:var(--muted);font-weight:500;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.02em;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2}
+td{padding:10px 12px;border-bottom:1px solid #1c2028;transition:background .1s}
+.clickable-row{cursor:pointer}.clickable-row:hover td{background:#1c2533}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.trips-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:calc(100vh - 200px);overflow-y:auto}
+.trip-date{font-weight:500;white-space:nowrap}
+.trip-score{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:12px;font-weight:600}
+.score-good{background:#1a3a2a;color:var(--green)}.score-mid{background:#2a2a1a;color:var(--yellow)}.score-bad{background:#2a1a1a;color:var(--red)}
+.trip-pct{font-size:12px;color:var(--muted)}.trip-pct b{color:var(--text);font-weight:500}
+.sbar{height:4px;border-radius:2px}
+.tip{position:relative;cursor:help;border-bottom:1px dotted var(--muted)}
+.tip .tip-text{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--text);width:240px;z-index:50;line-height:1.4;font-weight:400;white-space:normal;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.tip:hover .tip-text{display:block}
+.progress-bar{width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--primary);border-radius:4px;transition:width .3s}
+.log-area{background:#0a0c10;border:1px solid var(--border);border-radius:6px;font-family:'SF Mono',Menlo,monospace;font-size:11px;padding:8px 12px;max-height:300px;overflow-y:auto;white-space:pre-wrap;color:var(--muted);display:none;margin-top:8px}.log-area.open{display:block}
+.stat-num{font-size:24px;font-weight:600;line-height:1.2}.stat-label{font-size:12px;color:var(--muted);margin-top:2px}.stat-box{padding:12px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100}.overlay.open{display:flex;align-items:center;justify-content:center}
+.overlay-wrap{position:relative;width:90%;max-width:900px}
+.overlay-panel{background:var(--bg);border:1px solid var(--border);border-radius:8px;max-height:85vh;overflow-y:auto;padding:24px}
+.overlay-close{position:absolute;top:-14px;right:-14px;width:28px;height:28px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:16px;line-height:26px;text-align:center;cursor:pointer;border-radius:50%;z-index:110;padding:0}
+.overlay-close:hover{color:var(--text);border-color:var(--muted);background:var(--border)}
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:80px;margin:8px 0}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bar-col .bar{background:var(--primary);border-radius:2px 2px 0 0;width:100%;min-height:1px;transition:height .3s}
+.bar-col .bar-label{font-size:9px;color:var(--muted)}
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;height:100vh}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:32px;width:360px}
+.login-card h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.login-card p{color:var(--muted);font-size:13px;margin-bottom:20px}
+.login-card label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;margin-top:12px}
+.login-card .error{margin-top:12px}
+.lang-select{background:var(--surface);color:var(--text);border:1px solid var(--border);padding:3px 6px;border-radius:6px;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap" style="display:none">
+  <div class="login-card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h1>Toybaru ReCare</h1>
+      <select class="lang-select" onchange="setLang(this.value)" id="langSelect" style="width:auto"></select>
+    </div>
+    <p id="loginSubtitle"></p>
+    <label id="loginEmailLabel"></label>
+    <input type="email" id="loginEmail" autocomplete="email">
+    <label id="loginPwLabel"></label>
+    <input type="password" id="loginPw" autocomplete="current-password">
+    <label id="loginRegionLabel"></label>
+    <select id="loginRegion"><option value="EU">EU</option><option value="NA">NA</option></select>
+    <button class="btn btn-primary" style="width:100%;margin-top:16px;padding:8px" onclick="doLogin()" id="loginBtn"></button>
+    <div class="error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appView" style="display:none">
+<div class="shell">
+<div class="topbar">
+  <h1>Toybaru ReCare</h1>
+  <select id="vinSelect" style="width:auto"></select>
+  <span class="meta" id="lastUpdate"></span>
+  <select class="lang-select" onchange="setLang(this.value)" id="langSelect" style="width:auto"></select>
+  <button class="btn btn-sm" onclick="doLogout()" id="logoutBtn"></button>
+</div>
+<div class="tabs" id="tabBar"></div>
+
+<div class="page active" id="page-vehicle">
+  <div class="grid2">
+    <div class="card" id="batteryCard"></div>
+    <div class="card" id="statusCard"></div>
+    <div class="card" id="locationCard"></div>
+    <div class="card" id="efficiencyCard"></div>
+    <div class="card" id="remoteCard"></div>
+  </div>
+  <div class="card" id="lastTripCard" style="margin-top:12px"></div>
+  <div style="margin-top:8px;text-align:right"><button class="btn" onclick="loadOverview()" id="refreshOverviewBtn"></button></div>
+</div>
+
+<div class="page" id="page-trips">
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+    <input type="date" id="tripsFrom" style="width:auto"> <span class="meta" id="tripsToLabel"></span> <input type="date" id="tripsTo" style="width:auto">
+    <button class="btn btn-primary" onclick="loadTripsPage()" id="tripsLoadBtn"></button>
+    <button class="btn" onclick="syncTrips()" id="syncBtn"></button>
+    <span class="meta" id="tripsMeta"></span>
+  </div>
+  <div id="tripsTable"></div>
+</div>
+
+<div class="page" id="page-stats"><div id="statsContent"><div class="meta" id="statsLoading"></div></div></div>
+
+<div class="page" id="page-import">
+  <div class="grid2" style="align-items:start">
+    <!-- Import from API -->
+    <div class="card">
+      <div class="section-title" id="importTitle"></div>
+      <p class="meta" id="importDesc" style="margin-bottom:12px"></p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <label class="meta" id="importFromLabel"></label><input type="date" id="importFrom" value="2024-06-06" style="width:auto">
+        <label class="meta" id="importToLabel"></label><input type="date" id="importTo" style="width:auto">
+        <button class="btn btn-primary" id="importBtn" onclick="startImport()"></button>
+      </div>
+      <div id="importProgress" style="display:none">
+        <div class="progress-bar"><div class="progress-fill" id="importFill" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px"><span class="meta" id="importStatus"></span><span class="meta" id="importPct">0%</span></div>
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn btn-sm" onclick="toggleImportLog()" id="importLogBtn"></button>
+        <div class="log-area" id="importLog"></div>
+      </div>
+      <div class="meta" id="importDbInfo" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Export + Import files -->
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-title">Export</div>
+        <p class="meta" style="margin-bottom:12px">Download all data from the local database.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn" href="/api/export/trips.csv" download>Trips CSV</a>
+          <a class="btn" href="/api/export/trips.json" download>Trips JSON</a>
+          <a class="btn" href="/api/export/snapshots.csv" download>Snapshots CSV</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Re-Import</div>
+        <p class="meta" style="margin-bottom:12px">Import a previously exported JSON file back into the database.</p>
+        <input type="file" id="reimportFile" accept=".json" style="margin-bottom:8px">
+        <button class="btn" onclick="reimportJson()">Import JSON</button>
+        <div class="meta" id="reimportStatus" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Trip detail overlay -->
+<div class="overlay" id="tripOverlay">
+  <div class="overlay-wrap">
+    <button class="overlay-close" onclick="closeTrip()">&times;</button>
+    <div class="overlay-panel"><div id="tripDetail"></div></div>
+  </div>
+</div>
+
+<script>
+// --- i18n ---
+let lang = localStorage.getItem('toybaru_lang') || (navigator.language.startsWith('de') ? 'de' : 'en');
+let i = {};
+let LC = 'en-GB'; // browser locale for date/number formatting
+let availableLangs = [];
+const DEBUG = new URLSearchParams(window.location.search).has('debug');
+
+async function loadI18n() {
+  i = await (await fetch(`/api/locale/${lang}`)).json();
+  LC = i._meta?.locale || lang;
+  applyI18n();
+}
+
+function t(path) {
+  return path.split('.').reduce((o, k) => o?.[k], i) || path;
+}
+
+function tip(label, descKey) {
+  return `<span class="tip">${label}<span class="tip-text">${t(descKey)}</span></span>`;
+}
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('toybaru_lang', l);
+  loadI18n();
+}
+
+function updateLangSelects() {
+  document.querySelectorAll('.lang-select').forEach(sel => {
+    sel.innerHTML = '';
+    for (const l of availableLangs) {
+      const o = document.createElement('option');
+      o.value = l.code; o.textContent = l.label; o.selected = l.code === lang;
+      sel.appendChild(o);
+    }
+  });
+}
+
+function applyI18n() {
+  updateLangSelects();
+  // Login
+  document.getElementById('loginSubtitle').textContent = t('login.subtitle');
+  document.getElementById('loginEmailLabel').textContent = t('login.email');
+  document.getElementById('loginPwLabel').textContent = t('login.password');
+  document.getElementById('loginRegionLabel').textContent = t('login.region');
+  document.getElementById('loginBtn').textContent = t('login.submit');
+  // App
+  document.getElementById('logoutBtn').textContent = t('app.logout');
+  document.getElementById('refreshOverviewBtn').textContent = t('app.refresh');
+  document.getElementById('tripsToLabel').textContent = t('import.to').toLowerCase();
+  document.getElementById('tripsLoadBtn').textContent = t('trips.load');
+  document.getElementById('syncBtn').textContent = t('trips.sync');
+  document.getElementById('statsLoading').textContent = t('app.loading');
+  document.getElementById('importTitle').textContent = t('import.title');
+  document.getElementById('importDesc').textContent = t('import.description');
+  document.getElementById('importFromLabel').textContent = t('import.from');
+  document.getElementById('importToLabel').textContent = t('import.to');
+  document.getElementById('importBtn').textContent = t('import.start');
+  updateLogBtn();
+  // Tabs
+  const tabBar = document.getElementById('tabBar');
+  tabBar.innerHTML = '';
+  for (const [key, id] of [['nav.vehicle','vehicle'],['nav.trips','trips'],['nav.stats','stats'],['nav.import','import']]) {
+    const d = document.createElement('div');
+    d.className = 'tab' + (id === 'vehicle' ? ' active' : '');
+    d.dataset.tab = id;
+    d.textContent = t(key);
+    d.onclick = () => switchTab(id);
+    tabBar.appendChild(d);
+  }
+}
+
+// --- Globals ---
+let currentVin = null;
+let allData = {};
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + id));
+  if (id === 'stats') loadStats();
+  if (id === 'import') loadDbInfo();
+  if (id === 'trips' && !document.querySelector('#tripsTable table')) loadTripsPage();
+}
+
+// --- Helpers ---
+function hdc(h){if(!h||!h.evDistance&&!h.hdc_ev_distance)return{eco:0,reku:0,power:0};const d=h.evDistance||h.hdc_ev_distance||1;return{eco:Math.round(((h.ecoDist||h.hdc_eco_dist||0)/d)*100),reku:Math.round(((h.chargeDist||h.hdc_charge_dist||0)/d)*100),power:Math.round(((h.powerDist||h.hdc_power_dist||0)/d)*100)}}
+function sbarHtml(p){return`<div class="sbar"><div class="sbar-eco" style="width:${p.eco}%"></div><div class="sbar-reku" style="width:${p.reku}%"></div><div class="sbar-power" style="width:${p.power}%"></div></div>`}
+function fmtDate(s){return s?new Date(s).toLocaleString(LC,{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'?'}
+function fmtKm(m){return m!=null?(m/1000).toFixed(1):'?'}
+function scoreClass(s){return s>=80?'score-good':s>=60?'score-mid':'score-bad'}
+
+const SL={
+  'carstatus_item_driver_door':'status.driver_door','carstatus_item_driver_rear_door':'status.driver_rear_door',
+  'carstatus_item_driver_window':'status.driver_window','carstatus_item_driver_rear_window':'status.driver_rear_window',
+  'carstatus_item_passenger_door':'status.passenger_door','carstatus_item_passenger_rear_door':'status.passenger_rear_door',
+  'carstatus_item_passenger_window':'status.passenger_window','carstatus_item_passenger_rear_window':'status.passenger_rear_window',
+  'carstatus_item_rear_hatch':'status.rear_hatch','carstatus_item_hood':'status.hood',
+  'carstatus_closed':'status.closed','carstatus_open':'status.open','carstatus_locked':'status.locked','carstatus_unlocked':'status.unlocked',
+  'carstatus_category_driver':'status.left','carstatus_category_passenger':'status.right','carstatus_category_other':'status.other',
+};
+function ts(k){return t(SL[k]||k)}
+
+// --- Auth ---
+async function checkAuth() {
+  const r = await (await fetch('/api/auth/status')).json();
+  if (r.authenticated) {
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('appView').style.display = 'block';
+    await loadVehicles();
+    loadOverview();
+  } else {
+    document.getElementById('loginView').style.display = 'flex';
+    document.getElementById('appView').style.display = 'none';
+  }
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  btn.disabled = true; btn.textContent = t('login.signing_in'); err.textContent = '';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        username: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPw').value,
+        region: document.getElementById('loginRegion').value,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || t('login.failed'));
+    await checkAuth();
+  } catch(e) {
+    err.textContent = t('login.failed') + ': ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = t('login.submit');
+}
+
+async function doLogout() {
+  await fetch('/api/logout', {method:'POST'});
+  location.reload();
+}
+
+// --- Vehicles ---
+async function loadVehicles() {
+  const vehicles = await (await fetch('/api/vehicles')).json();
+  const sel = document.getElementById('vinSelect');
+  sel.innerHTML = '';
+  vehicles.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v.vin; o.textContent = v.alias || v.model_description || v.vin; sel.appendChild(o);
+  });
+  if (vehicles.length) { currentVin = vehicles[0].vin; sel.value = currentVin; }
+  sel.onchange = () => { currentVin = sel.value; loadOverview(); };
+}
+
+// --- Overview ---
+async function loadOverview() {
+  if (!currentVin) return;
+  document.getElementById('lastUpdate').textContent = t('app.loading');
+  allData = await (await fetch(`/api/all/${currentVin}`)).json();
+  renderBattery(allData.battery);
+  renderStatus(allData.status);
+  renderLocation(allData.location);
+  renderEfficiency(allData);
+  renderRemote();
+  renderLastTrip();
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString(LC);
+}
+
+function renderBattery(d) {
+  const el = document.getElementById('batteryCard');
+  if(!d||d.error){el.innerHTML=`<div class="section-title">${t('battery.title')}</div><div class="error">${d?.error||'N/A'}</div>`;return}
+  const pct=d.batteryLevel,range=d.evRange?.value,rangeAc=d.evRangeWithAc?.value,unit=d.evRange?.unit||'km';
+  const cs=d.chargingStatus||'?',csMap={none:t('battery.not_charging'),charging:t('battery.charging'),connected:t('battery.connected')};
+  const color=pct>50?'var(--green)':pct>20?'var(--yellow)':'var(--red)';
+  el.innerHTML=`<div class="section-title" style="display:flex;justify-content:space-between;align-items:center">${t('battery.title')} <button class="btn btn-sm" onclick="refreshBattery()" id="batRefreshBtn">${t('battery.refresh_btn')}</button></div>
+    <div class="bat-pct" style="color:${color}">${pct!=null?pct+'%':'?'}</div>
+    <div class="bat-bar"><div class="bat-fill" style="width:${pct||0}%;background:${color}"></div></div>
+    <div class="row"><span class="k">${t('battery.range')}</span><span>${range!=null?Math.round(range)+' '+unit:'?'}</span></div>
+    <div class="row"><span class="k">${t('battery.range_ac')}</span><span>${rangeAc!=null?Math.round(rangeAc)+' '+unit:'?'}</span></div>
+    <div class="row"><span class="k">${t('battery.status')}</span><span>${csMap[cs]||cs}</span></div>
+    ${d.remainingChargeTime?`<div class="row"><span class="k">${t('battery.full_in')}</span><span>${d.remainingChargeTime} min</span></div>`:''}
+    ${d.lastUpdateTimestamp?`<div class="row"><span class="k">${t('battery.last_update')}</span><span>${fmtDate(d.lastUpdateTimestamp)}</span></div>`:''}
+    <div class="meta" id="batRefreshStatus"></div>`;
+}
+
+async function refreshBattery() {
+  if(!currentVin)return;
+  const btn=document.getElementById('batRefreshBtn');const st=document.getElementById('batRefreshStatus');
+  btn.disabled=true;btn.style.opacity='.6';btn.textContent='...';
+  try{await fetch(`/api/refresh/${currentVin}`,{method:'POST'});st.textContent=t('battery.refresh_sent');
+    btn.textContent=t('battery.refresh_loading');const c=await(await fetch(`/api/battery/${currentVin}`)).json();if(c&&!c.error)renderBattery(c);
+  }catch(e){st.textContent=t('app.error')+': '+e.message}
+  btn.disabled=false;btn.textContent=t('battery.refresh_btn');btn.style.opacity='1';
+}
+
+function renderStatus(d) {
+  const el=document.getElementById('statusCard');
+  if(!d||d.error){el.innerHTML=`<div class="section-title">${t('status.title')}</div><div class="error">${d?.error||'N/A'}</div>`;return}
+  let h=`<div class="section-title">${t('status.title')}</div>`;
+  for(const cat of d.vehicleStatus||[]){
+    h+=`<div style="font-size:11px;color:var(--muted);margin-top:6px">${ts(cat.category)}</div>`;
+    for(const sec of cat.sections||[]){
+      const tags=(sec.values||[]).map(v=>{const bad=v.value==='carstatus_open'||v.value==='carstatus_unlocked';return`<span class="tag ${bad?'tag-warn':'tag-ok'}">${ts(v.value)}</span>`}).join(' ');
+      h+=`<div class="row"><span class="k">${ts(sec.section)}</span><span>${tags}</span></div>`;
+    }
+  }
+  if(d.telemetry?.odo?.value!=null)h+=`<div class="row" style="margin-top:8px"><span class="k">${t('status.odometer')}</span><span>${d.telemetry.odo.value.toLocaleString(LC)} km</span></div>`;
+  if(d.occurrenceDate)h+=`<div class="row"><span class="k">${t('status.last_update')}</span><span>${fmtDate(d.occurrenceDate)}</span></div>`;
+  el.innerHTML=h;
+}
+
+function renderLocation(d) {
+  const el=document.getElementById('locationCard');
+  if(!d||d.error){el.innerHTML=`<div class="section-title">${t('location.title')}</div><div class="error">${d?.error||'N/A'}</div>`;return}
+  const loc=d.vehicleLocation||d,lat=loc.latitude,lon=loc.longitude,ts2=loc.locationAcquisitionDatetime||d.lastTimestamp;
+  let h=`<div class="section-title">${t('location.title')}</div>`;
+  if(lat&&lon){
+    h+=`<div class="row"><span class="k">${t('location.position')}</span><span>${lat.toFixed(5)}, ${lon.toFixed(5)}</span></div>`;
+    if(ts2)h+=`<div class="row"><span class="k">${t('location.last_update')}</span><span>${fmtDate(ts2)}</span></div>`;
+    h+=`<iframe style="width:100%;height:200px;border-radius:6px;border:1px solid var(--border);margin-top:8px" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.004},${lat-.002},${lon+.004},${lat+.002}&layer=mapnik&marker=${lat},${lon}"></iframe>`;
+  }else h+=`<div class="meta">${t('location.unavailable')}</div>`;
+  el.innerHTML=h;
+}
+
+function renderEfficiency(all) {
+  const el=document.getElementById('efficiencyCard');
+  if(!DEBUG){el.style.display='none';return}
+  let h=`<div class="section-title">${tip(t('efficiency.title'),'efficiency.eco_desc')}</div>`;
+  const c=all.consumption;
+  if(c?.kwh_per_100km)h+=`<div class="stat-num">${c.kwh_per_100km} <span style="font-size:14px;color:var(--muted)">kWh/100km</span></div>`;
+  else if(c?.message)h+=`<div class="meta">${c.message}</div>`;
+  const bat=all.battery;
+  if(bat?.batteryLevel&&bat?.evRange?.value){
+    const eff=(bat.batteryLevel/100*71.4)/bat.evRange.value*100;
+    h+=`<div class="row" style="margin-top:8px"><span class="k">${t('efficiency.current')}</span><span>${eff.toFixed(1)} kWh/100km</span></div>`;
+  }
+  el.innerHTML=h;
+}
+
+function renderRemote() {
+  const el=document.getElementById('remoteCard');
+  let h=`<div class="section-title">${t('remote.title')}</div>`;
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap">`;
+  h+=`<button class="btn" onclick="sendCommand('door-lock')" title="${t('remote.lock_desc')}">&#128274; ${t('remote.lock')}</button>`;
+  h+=`<button class="btn" onclick="sendCommand('door-unlock')" title="${t('remote.unlock_desc')}">&#128275; ${t('remote.unlock')}</button>`;
+  h+=`</div><div class="meta" id="remoteStatus" style="margin-top:8px"></div>`;
+  el.innerHTML=h;
+}
+
+async function sendCommand(cmd) {
+  if(!currentVin)return;
+  if(!confirm(t('remote.confirm')))return;
+  const st=document.getElementById('remoteStatus');
+  st.textContent='...';
+  try{
+    const r=await(await fetch(`/api/command/${currentVin}/${cmd}`,{method:'POST'})).json();
+    if(r.error)st.textContent=t('app.error')+': '+r.error;
+    else st.textContent=t('remote.sent');
+  }catch(e){st.textContent=t('app.error')+': '+e.message}
+}
+
+async function renderLastTrip() {
+  const el=document.getElementById('lastTripCard');
+  el.innerHTML=`<div class="section-title">${t('app.last_trip')}</div><div class="meta">${t('app.loading')}</div>`;
+  const trips=await(await fetch(`/api/db/trips?limit=1&vin=${currentVin}`)).json();
+  if(!trips?.length){el.innerHTML=`<div class="section-title">${t('app.last_trip')}</div><div class="meta">${t('trips.no_db')}</div>`;return}
+  const r=trips[0];
+  const p=hdc(r);
+  const beh=JSON.parse(r.behaviours_json||'[]');
+  const badB=beh.filter(b=>b.type==='B'&&!b.good).length;
+  const badA=beh.filter(b=>b.type==='A'&&!b.good).length;
+  const d=r.start_ts?new Date(r.start_ts):null;
+  const dateStr=d?d.toLocaleDateString(LC,{weekday:'long',day:'2-digit',month:'long',year:'numeric'}):'?';
+  const timeStr=d?d.toLocaleTimeString(LC,{hour:'2-digit',minute:'2-digit'}):'';
+  const km=r.length_m!=null?(r.length_m/1000).toFixed(1):'?';
+  const dur=r.duration_s?Math.round(r.duration_s/60):'?';
+  const sc=r.score_global;
+
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="section-title" style="margin:0">${t('app.last_trip')}</div>
+    <button class="btn btn-sm" onclick="showTrip('${r.id}')">${t('app.details')} &rarr;</button>
+  </div>`;
+
+  h+=`<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">`;
+
+  // Date + time
+  h+=`<div><div style="font-size:16px;font-weight:500">${dateStr}</div><div class="meta">${timeStr}</div></div>`;
+
+  // Key numbers
+  h+=`<div style="display:flex;gap:16px">`;
+  h+=`<div class="stat-box" style="padding:0"><div class="stat-num" style="font-size:20px">${km}</div><div class="stat-label">km</div></div>`;
+  h+=`<div class="stat-box" style="padding:0"><div class="stat-num" style="font-size:20px">${dur}</div><div class="stat-label">min</div></div>`;
+  h+=`<div class="stat-box" style="padding:0"><div class="stat-num" style="font-size:20px">${r.avg_speed?Math.round(r.avg_speed):'?'}</div><div class="stat-label">&#8709; km/h</div></div>`;
+  h+=`<div class="stat-box" style="padding:0"><div class="stat-num" style="font-size:20px">${r.max_speed?Math.round(r.max_speed):'?'}</div><div class="stat-label">max km/h</div></div>`;
+  h+=`</div>`;
+
+  // Score
+  h+=`<div><span class="trip-score ${scoreClass(sc)}" style="width:36px;height:36px;font-size:15px">${sc??'?'}</span></div>`;
+
+  // Efficiency bar
+  h+=`<div style="min-width:160px;flex:1">`;
+  h+=sbarHtml(p);
+  h+=`<div class="trip-pct"><b>${p.eco}</b> eco &middot; <b>${p.reku}</b> reku &middot; <b>${p.power}</b> pwr</div>`;
+  h+=`</div>`;
+
+  h+=`</div>`;
+
+  // Behaviours summary
+  if(badB||badA){
+    h+=`<div style="margin-top:8px;font-size:12px;color:var(--red)">${badB?badB+' '+t('trips.braking_events'):''} ${badA?badA+' '+t('trips.accel_events'):''}</div>`;
+  }
+
+  el.innerHTML=h;
+}
+
+// --- Trips ---
+async function loadTripsPage() {
+  const from=document.getElementById('tripsFrom').value,to=document.getElementById('tripsTo').value;
+  document.getElementById('tripsMeta').textContent=t('app.loading');
+  const count=await(await fetch('/api/db/count')).json();
+  if(count.count===0){document.getElementById('tripsTable').innerHTML=`<div class="meta" style="padding:24px">${t('trips.no_db')}</div>`;document.getElementById('tripsMeta').textContent='';return}
+  const trips=await(await fetch(`/api/db/trips?limit=200&from_date=${from}&to_date=${to}&vin=${currentVin}`)).json();
+  document.getElementById('tripsMeta').textContent=`${trips.length} ${t('trips.title')}`;
+  renderTripsTable(trips);
+}
+
+async function syncTrips() {
+  if(!currentVin)return;const btn=document.getElementById('syncBtn');const meta=document.getElementById('tripsMeta');
+  btn.disabled=true;btn.style.opacity='.6';btn.textContent=t('trips.syncing');
+  try{const res=await(await fetch(`/api/sync/${currentVin}`,{method:'POST'})).json();
+    if(res.error)meta.textContent=t('app.error')+': '+res.error;
+    else{meta.textContent=t('trips.sync_result').replace('{new}',res.new).replace('{updated}',res.updated).replace('{total}',res.db_total);if(res.new>0)loadTripsPage()}
+  }catch(e){meta.textContent=t('app.error')+': '+e.message}
+  btn.disabled=false;btn.style.opacity='1';btn.textContent=t('trips.sync');
+}
+
+function renderTripsTable(trips) {
+  if(!trips.length){document.getElementById('tripsTable').innerHTML=`<div class="meta" style="padding:24px">${t('trips.no_trips')}</div>`;return}
+  let h=`<div class="trips-wrap"><table><thead><tr>
+    <th>${t('trips.date')}</th><th class="num">${t('trips.distance')}</th><th class="num">${t('trips.duration')}</th>
+    <th class="num">${t('trips.speed')}</th><th class="num">${tip(t('efficiency.score'),'efficiency.score_desc')}</th>
+    <th>${tip(t('efficiency.distribution'),'efficiency.distribution_desc')}</th>
+    ${DEBUG?`<th class="num">${tip(t('efficiency.est_consumption'),'efficiency.est_consumption_desc')}</th>`:''}
+  </tr></thead><tbody>`;
+  for(const r of trips){
+    const p=hdc(r);const beh=JSON.parse(r.behaviours_json||'[]');
+    const badB=beh.filter(b=>b.type==='B'&&!b.good).length,badA=beh.filter(b=>b.type==='A'&&!b.good).length;
+    const sc=r.score_global;
+    const d2=r.start_ts?new Date(r.start_ts):null;
+    const dateStr=d2?d2.toLocaleDateString(LC,{weekday:'short',day:'2-digit',month:'short'}):'?';
+    const timeStr=d2?d2.toLocaleTimeString(LC,{hour:'2-digit',minute:'2-digit'}):'';
+    h+=`<tr class="clickable-row" onclick="showTrip('${r.id}')">`;
+    h+=`<td><span class="trip-date">${dateStr}</span><br><span class="meta">${timeStr}</span></td>`;
+    h+=`<td class="num"><b>${fmtKm(r.length_m)}</b> <span class="meta">km</span></td>`;
+    h+=`<td class="num">${r.duration_s?Math.round(r.duration_s/60):'?'} <span class="meta">min</span></td>`;
+    h+=`<td class="num">${r.avg_speed?Math.round(r.avg_speed):'?'} <span class="meta">/ ${r.max_speed?Math.round(r.max_speed):'?'}</span></td>`;
+    h+=`<td class="num"><span class="trip-score ${scoreClass(sc)}">${sc??'?'}</span></td>`;
+    h+=`<td style="min-width:140px">${sbarHtml(p)}<div class="trip-pct"><b>${p.eco}</b> eco &middot; <b>${p.reku}</b> reku &middot; <b>${p.power}</b> pwr</div>`;
+    if(badB||badA)h+=`<div style="font-size:11px;color:var(--red);margin-top:1px">${badB?badB+' '+t('trips.braking_events'):''} ${badA?badA+' '+t('trips.accel_events'):''}</div>`;
+    h+=`</td>`;
+    if(DEBUG)h+=`<td class="num">${r.est_kwh_100km??'?'}</td>`;
+    h+=`</tr>`;
+  }
+  h+='</tbody></table></div>';document.getElementById('tripsTable').innerHTML=h;
+}
+
+// --- Trip Detail ---
+async function showTrip(tripId) {
+  document.getElementById('tripOverlay').classList.add('open');
+  const el=document.getElementById('tripDetail');el.innerHTML=`<div class="meta">${t('app.loading')}</div>`;
+  const r=await(await fetch(`/api/db/trip/${tripId}`)).json();
+  if(r.error){el.innerHTML=`<div class="error">${r.error}</div>`;return}
+  const p=hdc(r),beh=r.behaviours||[],route=r.route||[];
+  let h=`<div class="section-title">${fmtDate(r.start_ts)}</div>`;
+  h+=`<div class="grid3" style="margin-bottom:16px">`;
+  h+=`<div class="stat-box"><div class="stat-num">${fmtKm(r.length_m)}</div><div class="stat-label">km</div></div>`;
+  h+=`<div class="stat-box"><div class="stat-num">${r.duration_s?Math.round(r.duration_s/60):'?'}</div><div class="stat-label">min</div></div>`;
+  h+=`<div class="stat-box"><div class="stat-num">${r.avg_speed?Math.round(r.avg_speed):'?'}</div><div class="stat-label">&#8709; km/h</div></div></div>`;
+
+  h+=`<div class="grid2" style="margin-bottom:16px">`;
+  h+=`<div class="card"><div class="section-title">${t('trips.scores')}</div>`;
+  h+=`<div class="row"><span class="k">${tip(t('trips.score_overall'),'efficiency.score_desc')}</span><span>${r.score_global??'?'}</span></div>`;
+  h+=`<div class="row"><span class="k">${t('trips.score_accel')}</span><span>${r.score_acceleration??'?'}</span></div>`;
+  h+=`<div class="row"><span class="k">${t('trips.score_braking')}</span><span>${r.score_braking??'?'}</span></div>`;
+  if(r.score_constant_speed!=null)h+=`<div class="row"><span class="k">${t('trips.score_consistency')}</span><span>${r.score_constant_speed}</span></div>`;
+  h+=`</div>`;
+  h+=`<div class="card"><div class="section-title">${t('trips.driving_modes')}</div>${sbarHtml(p)}`;
+  h+=`<div class="sbar-legend"><span class="leg-eco">${t('efficiency.eco')} ${p.eco}%</span><span class="leg-reku">${t('efficiency.reku')} ${p.reku}%</span><span class="leg-power">${t('efficiency.power')} ${p.power}%</span></div>`;
+  h+=`<div class="row" style="margin-top:8px"><span class="k">${tip(t('efficiency.eco'),'efficiency.eco_desc')}</span><span>${p.eco}% (${fmtKm(r.hdc_eco_dist)} km)</span></div>`;
+  h+=`<div class="row"><span class="k">${tip(t('efficiency.reku'),'efficiency.reku_desc')}</span><span>${p.reku}% (${fmtKm(r.hdc_charge_dist)} km)</span></div>`;
+  h+=`<div class="row"><span class="k">${tip(t('efficiency.power'),'efficiency.power_desc')}</span><span>${p.power}% (${fmtKm(r.hdc_power_dist)} km)</span></div>`;
+  if(DEBUG&&r.est_kwh_100km)h+=`<div class="row" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px"><span class="k">${tip(t('efficiency.est_consumption'),'efficiency.est_consumption_desc')}</span><span style="font-weight:600">${r.est_kwh_100km} kWh/100km</span></div>`;
+  h+=`</div></div>`;
+
+  if(beh.length){
+    const bad=beh.filter(b=>!b.good);
+    h+=`<div class="card" style="margin-bottom:16px"><div class="section-title">${t('trips.behaviours')} (${beh.length})</div>`;
+    if(bad.length)h+=`<div style="color:var(--red);font-size:13px;margin-bottom:8px">${bad.filter(b=>b.type==='B').length} ${t('trips.braking_events')}, ${bad.filter(b=>b.type==='A').length} ${t('trips.accel_events')}</div>`;
+    h+=`<table><thead><tr><th>${t('trips.behaviour_time')}</th><th>${t('trips.behaviour_type')}</th><th>${t('trips.behaviour_rating')}</th></tr></thead><tbody>`;
+    for(const b of beh){
+      const time=b.ts?new Date(b.ts).toLocaleTimeString(LC):'?';
+      h+=`<tr><td>${time}</td><td>${b.type==='B'?t('trips.braking'):t('trips.acceleration')}</td><td>${b.good?`<span style="color:var(--green)">${t('trips.good')}</span>`:`<span style="color:var(--red)">${t('trips.harsh')}</span>`}</td></tr>`;
+    }
+    h+=`</tbody></table></div>`;
+  }
+
+  // Route
+  h+=`<div class="card"><div class="section-title">${t('trips.route')}</div>`;
+  h+=`<div style="position:relative"><canvas id="routeCanvas" style="width:100%;height:420px;border-radius:6px;cursor:grab;display:block"></canvas><button class="btn btn-sm" onclick="if(window._routeMap)window._routeMap.fitRoute()" style="position:absolute;top:8px;right:8px;opacity:.85">${t('trips.route_fit')}</button></div>`;
+  h+=`<div class="sbar-legend" style="margin-top:8px"><span class="leg-eco">${t('efficiency.eco')}</span><span class="leg-reku">${t('efficiency.reku')}</span><span class="leg-power">${t('efficiency.power')}</span><span style="color:var(--muted);font-size:11px;margin-left:auto">${t('trips.route_scroll')}</span></div></div>`;
+
+  h+=`<details style="margin-top:16px"><summary class="meta" style="cursor:pointer">${t('trips.stats_nerds')}</summary>`;
+  h+=`<pre style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;overflow:auto;max-height:400px;margin-top:8px;font-family:'SF Mono',Menlo,monospace">${JSON.stringify(JSON.parse(r.raw_json||'{}'),null,2)}</pre></details>`;
+
+  el.innerHTML=h;
+  const canvas=document.getElementById('routeCanvas');
+  if(canvas)window._routeMap=new RouteMap(canvas,route,beh);
+}
+
+function closeTrip(){document.getElementById('tripOverlay').classList.remove('open');document.getElementById('tripDetail').innerHTML=''}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTrip()});
+
+// --- Stats ---
+let statsFrom='', statsTo='';
+async function loadStats() {
+  const el=document.getElementById('statsContent');el.innerHTML=`<div class="meta">${t('app.loading')}</div>`;
+  let url=`/api/db/stats?vin=${currentVin}`;
+  if(statsFrom)url+=`&from_date=${statsFrom}`;
+  if(statsTo)url+=`&to_date=${statsTo}`;
+  const s=await(await fetch(url)).json();
+  if(!s.total_trips){el.innerHTML=`<div class="meta">${t('trips.no_db')}</div>`;return}
+  const lc=LC;
+  let h='';
+
+  // Time range selector
+  h+=`<div class="card" style="margin-bottom:16px;display:flex;gap:12px;align-items:center;padding:10px 16px">
+    <span class="meta">${t('import.from')}</span><input type="date" id="statsFrom" value="${statsFrom}" style="width:auto" onchange="statsFrom=this.value;loadStats()">
+    <span class="meta">${t('import.to')}</span><input type="date" id="statsTo" value="${statsTo}" style="width:auto" onchange="statsTo=this.value;loadStats()">
+    <button class="btn btn-sm" onclick="statsFrom='';statsTo='';loadStats()">${t('stats.overview')}</button>
+    <span class="meta">${s.days_span} ${t('app.days')}, ${s.first_trip?.slice(0,10)} - ${s.last_trip?.slice(0,10)}</span>
+  </div>`;
+
+  // Top numbers
+  h+=`<div class="grid4" style="margin-bottom:16px">`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.total_trips.toLocaleString(lc)}</div><div class="stat-label">${t('stats.total_trips')}</div></div>`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.total_km.toLocaleString(lc)}</div><div class="stat-label">${t('stats.total_km')}</div></div>`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.total_hours.toLocaleString(lc)}</div><div class="stat-label">${t('stats.total_hours')}</div></div>`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.km_per_day}</div><div class="stat-label">${t('stats.km_per_day')}</div></div></div>`;
+
+  // Scores
+  h+=`<div class="grid4" style="margin-bottom:16px">`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.avg_score}</div><div class="stat-label">${t('stats.avg_score')}</div></div>`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.avg_score_accel}</div><div class="stat-label">${t('trips.score_accel')}</div></div>`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.avg_score_braking}</div><div class="stat-label">${t('trips.score_braking')}</div></div>`;
+  h+=`<div class="card stat-box"><div class="stat-num">${s.avg_speed} / ${s.max_speed}</div><div class="stat-label">${t('stats.avg_speed')} / max</div></div></div>`;
+
+  // Efficiency bar
+  h+=`<div class="card" style="margin-bottom:16px"><div class="section-title">${t('stats.efficiency_all')}</div><div class="grid3">`;
+  h+=`<div class="stat-box"><div class="stat-num" style="color:var(--green)">${s.eco_pct}%</div><div class="stat-label">${t('stats.eco_share')}</div></div>`;
+  h+=`<div class="stat-box"><div class="stat-num" style="color:var(--blue)">${s.reku_pct}%</div><div class="stat-label">${t('stats.reku_share')}</div></div>`;
+  h+=`<div class="stat-box"><div class="stat-num" style="color:var(--red)">${s.power_pct}%</div><div class="stat-label">${t('stats.power_share')}</div></div></div>`;
+  h+=sbarHtml({eco:s.eco_pct,reku:s.reku_pct,power:s.power_pct})+`</div>`;
+
+  // Monthly km + score chart
+  if(s.monthly?.length>1){
+    const maxKm=Math.max(...s.monthly.map(m=>m.km));
+    h+=`<div class="card" style="margin-bottom:16px"><div class="section-title">${t('stats.km_per_month')}</div>`;
+    h+=`<div class="bar-chart">`;
+    for(const m of s.monthly){
+      const ht=Math.max(4,Math.round(m.km/maxKm*72));
+      const ml=m.month.split('-');const mn=new Date(m.month+'-15').toLocaleString(LC,{month:'short'});
+      h+=`<div class="bar-col" title="${m.month}: ${m.km} km, Score ${m.score}"><div class="bar" style="height:${ht}px"></div><div class="bar-label">${mn}</div><div class="bar-label">${ml[0].slice(2)}</div></div>`;
+    }
+    h+=`</div>`;
+    // Score trend line under the bars
+    h+=`<div style="display:flex;gap:3px;margin-top:4px">`;
+    for(const m of s.monthly){h+=`<div class="bar-col"><div class="bar-label" style="color:${m.score>=80?'var(--green)':m.score>=60?'var(--yellow)':'var(--red)'}">${m.score}</div></div>`}
+    h+=`</div><div class="meta" style="text-align:right">Score &#8593;</div></div>`;
+  }
+
+  // Two columns: weekday + time of day
+  h+=`<div class="grid2" style="margin-bottom:16px">`;
+
+  // Weekday
+  if(s.weekday?.length){
+    const maxD=Math.max(...s.weekday.map(d=>d.trips));
+    h+=`<div class="card"><div class="section-title">${t('stats.trips_by_weekday')}</div><div class="bar-chart" style="height:60px">`;
+    for(const d of s.weekday){const ht=Math.max(4,Math.round(d.trips/maxD*52));h+=`<div class="bar-col"><div class="bar" style="height:${ht}px" title="${d.trips} ${t('nav.trips')}, ${d.km} km"></div><div class="bar-label">${d.day}</div><div class="bar-label">${d.trips}</div></div>`}
+    h+=`</div></div>`;
+  }
+
+  // Hourly
+  if(s.hourly?.length){
+    const maxH=Math.max(...s.hourly.map(h2=>h2.trips));
+    h+=`<div class="card"><div class="section-title">${t('stats.time_of_day')}</div><div class="bar-chart" style="height:60px">`;
+    for(let hr=0;hr<24;hr++){const d=s.hourly.find(x=>x.hour===hr);const v=d?d.trips:0;const ht=Math.max(1,Math.round(v/maxH*52));
+      h+=`<div class="bar-col" title="${hr}:00 - ${v} ${t('nav.trips')}"><div class="bar-label">${v||''}</div><div class="bar" style="height:${ht}px;${hr>=22||hr<6?'background:var(--muted)':hr>=6&&hr<12?'background:var(--yellow)':hr>=12&&hr<18?'background:var(--green)':'background:var(--blue)'}"></div></div>`}
+    h+=`</div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div></div>`;
+  }
+  h+=`</div>`;
+
+  // Speed categories + score distribution
+  h+=`<div class="grid2" style="margin-bottom:16px">`;
+  const sc=s.speed_cats;
+  const totalCat=sc.city_trips+sc.rural_trips+sc.highway_trips||1;
+  h+=`<div class="card"><div class="section-title">${t('stats.speed_categories')}</div>`;
+  h+=`<div class="row"><span class="k">${t('stats.city')}</span><span>${sc.city_trips} (${Math.round(sc.city_trips/totalCat*100)}%) &middot; ${sc.city_km} km</span></div>`;
+  h+=`<div class="row"><span class="k">${t('stats.rural')}</span><span>${sc.rural_trips} (${Math.round(sc.rural_trips/totalCat*100)}%) &middot; ${sc.rural_km} km</span></div>`;
+  h+=`<div class="row"><span class="k">${t('stats.highway')}</span><span>${sc.highway_trips} (${Math.round(sc.highway_trips/totalCat*100)}%) &middot; ${sc.highway_km} km</span></div></div>`;
+
+  // Score distribution
+  if(s.score_dist?.length){
+    const maxSd=Math.max(...s.score_dist.map(d=>d.count));
+    h+=`<div class="card"><div class="section-title">${t('stats.score_distribution')}</div><div class="bar-chart" style="height:60px">`;
+    for(const d of s.score_dist){const ht=Math.max(4,Math.round(d.count/maxSd*52));const b=parseInt(d.bucket);
+      h+=`<div class="bar-col"><div class="bar" style="height:${ht}px;background:${b>=80?'var(--green)':b>=60?'var(--yellow)':'var(--red)'}"></div><div class="bar-label">${d.count}</div><div class="bar-label">${d.bucket}</div></div>`}
+    h+=`</div></div>`;
+  }
+  h+=`</div>`;
+
+  // Averages + misc
+  h+=`<div class="grid2" style="margin-bottom:16px">`;
+  h+=`<div class="card"><div class="section-title">${t('stats.averages')}</div>`;
+  h+=`<div class="row"><span class="k">${t('stats.avg_trip_length')}</span><span>${s.avg_trip_km} km</span></div>`;
+  h+=`<div class="row"><span class="k">${t('stats.avg_trip_duration')}</span><span>${s.avg_trip_min} min</span></div>`;
+  h+=`<div class="row"><span class="k">${t('stats.trips_per_day')}</span><span>${s.trips_per_day}</span></div>`;
+  h+=`<div class="row"><span class="k">${t('stats.night_trips')}</span><span>${s.night_trips} (${s.night_pct}%)</span></div>`;
+  h+=`<div class="row"><span class="k">${t('app.idle_time')}</span><span>${s.idle_hours} h</span></div>`;
+  h+=`<div class="row"><span class="k">${t('app.overspeed')}</span><span>${s.overspeed_km} km</span></div></div>`;
+
+  // Records
+  h+=`<div class="card"><div class="section-title">${t('stats.records')}</div>`;
+  const rec=s.records||{};
+  if(rec.longest_trip)h+=`<div class="row"><span class="k">${t('stats.longest_trip')}</span><span>${(rec.longest_trip.value/1000).toFixed(1)} km <span class="meta">${rec.longest_trip.date?.slice(0,10)}</span></span></div>`;
+  if(rec.top_speed)h+=`<div class="row"><span class="k">${t('stats.max_speed')}</span><span>${rec.top_speed.value} km/h <span class="meta">${rec.top_speed.date?.slice(0,10)}</span></span></div>`;
+  if(rec.fastest_avg)h+=`<div class="row"><span class="k">${t('stats.fastest_avg')}</span><span>${Math.round(rec.fastest_avg.value)} km/h <span class="meta">${rec.fastest_avg.date?.slice(0,10)}</span></span></div>`;
+  if(rec.best_score)h+=`<div class="row"><span class="k">${t('stats.best_score')}</span><span>${rec.best_score.value} <span class="meta">${rec.best_score.date?.slice(0,10)}</span></span></div>`;
+  if(rec.best_reku)h+=`<div class="row"><span class="k">${t('stats.best_reku')}</span><span>${rec.best_reku.value}% <span class="meta">${rec.best_reku.date?.slice(0,10)}</span></span></div>`;
+  if(s.best_day)h+=`<div class="row"><span class="k">${t('stats.most_km_day')}</span><span>${s.best_day.km} km (${s.best_day.trips} ${t('nav.trips').toLowerCase()}) <span class="meta">${s.best_day.date}</span></span></div>`;
+  h+=`</div></div>`;
+
+  if(DEBUG&&s.est_avg_kwh_100km){h+=`<div class="card"><div class="stat-num">${s.est_avg_kwh_100km} <span style="font-size:14px;color:var(--muted)">kWh/100km</span></div><div class="stat-label">${t('stats.est_consumption')}</div></div>`}
+  el.innerHTML=h;
+}
+
+// --- Import ---
+async function loadDbInfo(){const c=await(await fetch('/api/db/count')).json();document.getElementById('importDbInfo').textContent=t('import.db_info').replace('{count}',c.count)}
+
+function startImport() {
+  const from=document.getElementById('importFrom').value,to=document.getElementById('importTo').value;
+  const btn=document.getElementById('importBtn'),prog=document.getElementById('importProgress'),fill=document.getElementById('importFill'),st=document.getElementById('importStatus'),pctEl=document.getElementById('importPct'),log=document.getElementById('importLog');
+  btn.disabled=true;prog.style.display='block';log.textContent='';log.classList.remove('open');
+  const es=new EventSource(`/api/import/${currentVin}?from_date=${from}&to_date=${to}`);
+  es.onmessage=(e)=>{
+    const d=JSON.parse(e.data);
+    if(d.type==='start'){
+      log.textContent+=`[${new Date().toLocaleTimeString()}] Import gestartet: ${d.from} bis ${d.to}\n`;
+    } else if(d.type==='progress'){
+      fill.style.width=d.pct+'%';pctEl.textContent=d.pct+'%';
+      st.textContent=t('import.fetched').replace('{fetched}',d.fetched).replace('{total}',d.total).replace('{new}',d.new).replace('{updated}',d.updated);
+      const ts=new Date().toLocaleTimeString();
+      let line=`[${ts}] ${d.pct}% | ${d.fetched}/${d.total} | +${d.new} new, ~${d.updated} upd`;
+      if(d.trips?.length){
+        const details=d.trips.map(tr=>`  ${tr.date} ${tr.km}km ${tr.spd}km/h score:${tr.score??'?'}`).join('\n');
+        line+='\n'+details;
+      }
+      log.textContent+=line+'\n';
+      log.scrollTop=log.scrollHeight;
+    } else if(d.type==='error'){
+      st.textContent=t('import.error')+': '+d.message;
+      log.textContent+=`[${new Date().toLocaleTimeString()}] ERROR: ${d.message}\n`;
+      es.close();btn.disabled=false;
+    } else if(d.type==='done'){
+      fill.style.width='100%';pctEl.textContent='100%';
+      st.textContent=t('import.done').replace('{fetched}',d.fetched).replace('{new}',d.new).replace('{updated}',d.updated).replace('{total}',d.db_total);
+      log.textContent+=`[${new Date().toLocaleTimeString()}] Done! ${d.fetched} fetched, ${d.new} new, ${d.updated} updated. DB: ${d.db_total} trips.\n`;
+      es.close();btn.disabled=false;loadDbInfo();
+    }
+  };
+  es.onerror=()=>{st.textContent=t('app.error');log.textContent+=`[${new Date().toLocaleTimeString()}] Connection lost\n`;es.close();btn.disabled=false};
+}
+
+function toggleImportLog() {
+  const log=document.getElementById('importLog');
+  log.classList.toggle('open');
+  updateLogBtn();
+}
+function updateLogBtn() {
+  const log=document.getElementById('importLog');
+  const btn=document.getElementById('importLogBtn');
+  btn.textContent = log.classList.contains('open') ? t('import.log_hide') : t('import.log_show');
+}
+
+async function reimportJson() {
+  const file=document.getElementById('reimportFile').files[0];
+  const st=document.getElementById('reimportStatus');
+  if(!file){st.textContent='No file selected';return}
+  st.textContent=t('app.loading');
+  try{
+    const text=await file.text();
+    const data=JSON.parse(text);
+    const trips=Array.isArray(data)?data:data.trips||[];
+    const res=await(await fetch('/api/reimport',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trips})})).json();
+    if(res.error)st.textContent=t('app.error')+': '+res.error;
+    else st.textContent=`${res.new} new, ${res.updated} updated (${res.total} total)`;
+    loadDbInfo();
+  }catch(e){st.textContent=t('app.error')+': '+e.message}
+}
+
+// --- Canvas Route Map ---
+class RouteMap {
+  constructor(canvas,route,behaviours){
+    this.canvas=canvas;this.ctx=canvas.getContext('2d');
+    this.route=route.filter(p=>p.lat&&p.lon);this.behaviours=(behaviours||[]).filter(b=>b.lat&&b.lon);
+    this.tileCache={};this.dpr=window.devicePixelRatio||1;
+    const rect=canvas.getBoundingClientRect();canvas.width=rect.width*this.dpr;canvas.height=rect.height*this.dpr;
+    this.W=rect.width;this.H=rect.height;
+    if(!this.route.length){this.ctx.fillStyle='#161b22';this.ctx.fillRect(0,0,canvas.width,canvas.height);return}
+    const lats=this.route.map(p=>p.lat),lons=this.route.map(p=>p.lon);
+    this.minLat=Math.min(...lats);this.maxLat=Math.max(...lats);this.minLon=Math.min(...lons);this.maxLon=Math.max(...lons);
+    this.zoom=this._fitZoom();
+    const cp=this._project((this.minLat+this.maxLat)/2,(this.minLon+this.maxLon)/2);
+    this.ox=cp.x-this.W/2;this.oy=cp.y-this.H/2;
+    this._dragging=false;
+    // Tooltip
+    this._tooltip=document.createElement('div');
+    this._tooltip.style.cssText='position:absolute;display:none;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font-size:12px;color:#c9d1d9;pointer-events:none;z-index:20;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)';
+    canvas.parentElement.style.position='relative';
+    canvas.parentElement.appendChild(this._tooltip);
+
+    canvas.addEventListener('wheel',e=>{e.preventDefault();this._onWheel(e)},{passive:false});
+    canvas.addEventListener('mousedown',e=>{this._dragging=true;this._lastX=e.clientX;this._lastY=e.clientY;canvas.style.cursor='grabbing';this._tooltip.style.display='none'});
+    canvas.addEventListener('mousemove',e=>{
+      if(this._dragging){this.ox-=(e.clientX-this._lastX);this.oy-=(e.clientY-this._lastY);this._lastX=e.clientX;this._lastY=e.clientY;this.render();return}
+      const rect=this.canvas.getBoundingClientRect();
+      const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+      this._showTooltip(mx,my);
+    });
+    window.addEventListener('mouseup',()=>{if(this._dragging){this._dragging=false;canvas.style.cursor='grab'}});
+    canvas.addEventListener('mouseleave',()=>{this._tooltip.style.display='none'});
+    canvas.addEventListener('touchstart',e=>{if(e.touches.length===1){this._dragging=true;this._lastX=e.touches[0].clientX;this._lastY=e.touches[0].clientY}});
+    canvas.addEventListener('touchmove',e=>{if(!this._dragging||e.touches.length!==1)return;e.preventDefault();this.ox-=(e.touches[0].clientX-this._lastX);this.oy-=(e.touches[0].clientY-this._lastY);this._lastX=e.touches[0].clientX;this._lastY=e.touches[0].clientY;this.render()},{passive:false});
+    canvas.addEventListener('touchend',()=>{this._dragging=false});
+    this.render();
+  }
+  _project(lat,lon){const n=Math.pow(2,this.zoom);const x=((lon+180)/360)*n*256;const r=lat*Math.PI/180;const y=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n*256;return{x,y}}
+  _toCanvas(wp){return{x:(wp.x-this.ox)*this.dpr,y:(wp.y-this.oy)*this.dpr}}
+  _fitZoom(){for(let z=18;z>=1;z--){const n=Math.pow(2,z);const p1=this._pAt(this.minLat,this.minLon,n),p2=this._pAt(this.maxLat,this.maxLon,n);if(Math.abs(p2.x-p1.x)<this.W*.85&&Math.abs(p2.y-p1.y)<this.H*.85)return z}return 1}
+  _pAt(lat,lon,n){const x=((lon+180)/360)*n*256;const r=lat*Math.PI/180;return{x,y:(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n*256}}
+  _onWheel(e){const rect=this.canvas.getBoundingClientRect();const mx=e.clientX-rect.left,my=e.clientY-rect.top;const wx=this.ox+mx,wy=this.oy+my;const oz=this.zoom;this.zoom=Math.max(1,Math.min(18,this.zoom+(-e.deltaY*.002)));if(this.zoom===oz)return;const s=Math.pow(2,this.zoom-oz);this.ox=wx*s-mx;this.oy=wy*s-my;this.render()}
+  fitRoute(){this.zoom=this._fitZoom();const cp=this._project((this.minLat+this.maxLat)/2,(this.minLon+this.maxLon)/2);this.ox=cp.x-this.W/2;this.oy=cp.y-this.H/2;this.render()}
+
+  _showTooltip(mx,my){
+    const modeNames={0:t('efficiency.reku'),1:t('efficiency.eco'),2:t('efficiency.power')};
+    const modeColors={0:'#58a6ff',1:'#3fb950',2:'#f85149'};
+    let best=null, bestDist=Infinity;
+
+    // Check behaviours first (higher priority, bigger hit area)
+    for(const b of this.behaviours){
+      const wp=this._project(b.lat,b.lon);
+      const sx=(wp.x-this.ox), sy=(wp.y-this.oy); // screen coords (non-dpr)
+      const dx=sx-mx, dy=sy-my;
+      const d=dx*dx+dy*dy;
+      if(d<600&&d<bestDist){
+        bestDist=d;
+        const typ=b.type==='B'?t('trips.braking'):t('trips.acceleration');
+        const rating=b.good?t('trips.good'):t('trips.harsh');
+        const time=b.ts?new Date(b.ts).toLocaleTimeString(LC):'';
+        const slope=b.context?.slope?` | ${t('app.slope')}: ${(b.context.slope*100).toFixed(1)}%`:'';
+        best=`<span style="color:${b.good?'#3fb950':'#f85149'}">&#9679;</span> <b>${typ}</b> ${rating}${time?' | '+time:''}${slope}`;
+      }
+    }
+
+    // Check route points (sample every Nth for performance)
+    if(!best){
+      const step=Math.max(1,Math.floor(this.route.length/500));
+      for(let i=0;i<this.route.length;i+=step){
+        const p=this.route[i];
+        const wp=this._project(p.lat,p.lon);
+        const sx=(wp.x-this.ox), sy=(wp.y-this.oy);
+        const dx=sx-mx, dy=sy-my;
+        const d=dx*dx+dy*dy;
+        if(d<300&&d<bestDist){
+          bestDist=d;
+          const mode=modeNames[p.mode]||'?';
+          const color=modeColors[p.mode]||'#8b949e';
+          const os=p.overspeed?` | <span style="color:#f85149">${t('app.overspeed_long')}</span>`:'';
+          const hw=p.highway?` | ${t('app.highway')}`:'';
+          const modeDesc={0:t('app.regen_desc'),1:t('app.eco_drive_desc'),2:t('app.power_drive_desc')};
+          best=`<span style="color:${color}">&#9679;</span> <b>${mode}</b>${os}${hw}<br><span style="color:#8b949e">${modeDesc[p.mode]||''}</span><br><span style="color:#8b949e">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</span>`;
+        }
+      }
+    }
+
+    if(best){
+      this._tooltip.innerHTML=best;
+      this._tooltip.style.display='block';
+      let tx=mx+14, ty=my-36;
+      if(ty<4)ty=my+16;
+      if(tx+200>this.W)tx=mx-210;
+      this._tooltip.style.left=tx+'px';
+      this._tooltip.style.top=ty+'px';
+    }else{
+      this._tooltip.style.display='none';
+    }
+  }
+
+  _loadTile(z,tx,ty){const k=`${z}/${tx}/${ty}`;if(this.tileCache[k])return this.tileCache[k];const img=new Image();img.crossOrigin='anonymous';img.src=`https://tile.openstreetmap.org/${z}/${tx}/${ty}.png`;img.onload=()=>this.render();this.tileCache[k]=img;return img}
+  render(){
+    const ctx=this.ctx,dpr=this.dpr;ctx.fillStyle='#161b22';ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+    const tz=Math.round(this.zoom),tN=Math.pow(2,tz),rN=Math.pow(2,this.zoom),sc=rN/tN,ts2=256*sc;
+    const tOx=this.ox/sc,tOy=this.oy/sc;
+    const sx=Math.floor(tOx/256),sy=Math.floor(tOy/256),ex=Math.ceil((tOx+this.W/sc)/256),ey=Math.ceil((tOy+this.H/sc)/256);
+    for(let tx=sx;tx<=ex;tx++)for(let ty=sy;ty<=ey;ty++){if(tx<0||ty<0||tx>=tN||ty>=tN)continue;const img=this._loadTile(tz,tx,ty);if(img.complete&&img.naturalWidth)ctx.drawImage(img,(tx*ts2-this.ox)*dpr,(ty*ts2-this.oy)*dpr,ts2*dpr,ts2*dpr)}
+    if(this.route.length<2)return;
+    const mc={0:'#58a6ff',1:'#3fb950',2:'#f85149'};ctx.lineWidth=3*dpr;ctx.lineCap='round';ctx.lineJoin='round';
+    let pm=this.route[0].mode;ctx.beginPath();let f=this._toCanvas(this._project(this.route[0].lat,this.route[0].lon));ctx.moveTo(f.x,f.y);
+    for(let i=1;i<this.route.length;i++){const p=this.route[i],cp2=this._toCanvas(this._project(p.lat,p.lon));if(p.mode!==pm){ctx.strokeStyle=mc[pm]||'#8b949e';ctx.globalAlpha=.9;ctx.stroke();ctx.beginPath();ctx.moveTo(cp2.x,cp2.y);pm=p.mode}ctx.lineTo(cp2.x,cp2.y)}
+    ctx.strokeStyle=mc[pm]||'#8b949e';ctx.globalAlpha=.9;ctx.stroke();ctx.globalAlpha=1;
+    for(const b of this.behaviours){const cp2=this._toCanvas(this._project(b.lat,b.lon));ctx.beginPath();ctx.arc(cp2.x,cp2.y,5*dpr,0,Math.PI*2);ctx.fillStyle=b.good?'#3fb950':(b.type==='B'?'#f85149':'#d29922');ctx.fill();ctx.strokeStyle='#0d1117';ctx.lineWidth=1.5*dpr;ctx.stroke()}
+    const sp=this._toCanvas(this._project(this.route[0].lat,this.route[0].lon)),ep=this._toCanvas(this._project(this.route[this.route.length-1].lat,this.route[this.route.length-1].lon));
+    for(const[pt,col] of[[sp,'#3fb950'],[ep,'#f85149']]){ctx.beginPath();ctx.arc(pt.x,pt.y,7*dpr,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#0d1117';ctx.lineWidth=2*dpr;ctx.stroke()}
+  }
+}
+
+// --- Init ---
+async function init() {
+  const today=new Date().toISOString().slice(0,10),month=new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+  document.getElementById('tripsFrom').value=month;document.getElementById('tripsTo').value=today;document.getElementById('importTo').value=today;
+  availableLangs = await (await fetch('/api/languages')).json();
+  // If stored lang not available, fall back
+  if (!availableLangs.find(l => l.code === lang)) lang = availableLangs[0]?.code || 'en';
+  await loadI18n();
+  await checkAuth();
+}
+init();
+</script>
+</body>
+</html>
