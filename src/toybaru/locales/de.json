@@ -53,6 +53,8 @@
     "not_charging": "Nicht geladen",
     "connected": "Verbunden",
     "full_in": "Voll in",
+    "full_at": "Voll um",
+    "charge_rate": "Ladeleistung",
     "last_update": "Stand",
     "refresh_btn": "Aktualisieren",
     "refresh_sent": "Refresh angefragt. Daten kommen beim naechsten Laden.",

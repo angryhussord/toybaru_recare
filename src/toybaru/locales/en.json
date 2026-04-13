@@ -53,6 +53,8 @@
     "not_charging": "Not charging",
     "connected": "Connected",
     "full_in": "Full in",
+    "full_at": "Full at",
+    "charge_rate": "Charge rate",
     "last_update": "Last update",
     "refresh_btn": "Update",
     "refresh_sent": "Refresh requested. Data will update shortly.",

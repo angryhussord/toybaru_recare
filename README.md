@@ -215,8 +215,7 @@ Open an issue or pull request on GitHub.
 
 ## License
 
-This project is licensed under the GNU General Public License v2.0 (GPL-2.0-only), the same license used by the Linux kernel.
-
+This project is licensed under the GNU General Public License.
 See [LICENSE](LICENSE) for the full text.
 
 ## AI Disclaimer
