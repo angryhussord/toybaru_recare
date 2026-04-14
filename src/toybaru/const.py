@@ -29,7 +29,7 @@ BRANDS = {
     },
     "toyota": {
         "label": "Toyota",
-        "regions": ["toyota-eu"],
+        "regions": ["toyota-eu", "toyota-na"],
     },
 }
 
@@ -55,6 +55,18 @@ _DEFAULTS = {
         basic_auth="b25lYXBwOm9uZWFwcA==",
         api_key="pypIHG015k4ABHWbcI4G0a94F7cC0JDo1OynpAsG", # thx to SwordfishLocal2677
         brand="S",
+        region="NA",
+        auth_service="",
+    ),
+    "toyota-na": RegionConfig(
+        name="Toyota NA",
+        auth_realm="https://login.subarudriverslogin.com/oauth2/realms/root/realms/tmna-native",
+        api_base_url="https://api.telematicsct.com",
+        client_id="oneappsdkclient",
+        redirect_uri="com.toyota.oneapp:/oauth2Callback",
+        basic_auth="b25lYXBwOm9uZWFwcA==",
+        api_key="pypIHG015k4ABHWbcI4G0a94F7cC0JDo1OynpAsG",
+        brand="T",
         region="NA",
         auth_service="",
     ),
