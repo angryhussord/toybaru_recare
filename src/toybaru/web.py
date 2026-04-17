@@ -398,6 +398,9 @@ async def api_all(vin: str, session: str | None = Cookie(None)):
             longitude=loc.get("longitude"),
         )
 
+    brand_code = client.auth.region.brand  # "T" or "S"
+    brand_name = "toyota" if brand_code == "T" else "subaru"
+
     return {
         "status": status,
         "battery": battery,
@@ -405,6 +408,7 @@ async def api_all(vin: str, session: str | None = Cookie(None)):
         "telemetry": telemetry,
         "consumption": get_consumption_estimate(),
         "capabilities": {"trips": not client.api._is_na},
+        "brand": brand_name,
     }
 
 
