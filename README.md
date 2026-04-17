@@ -208,7 +208,7 @@ Use `en.json` as a template. The language will appear automatically in the dropd
 ## First steps after installation
 
 1. Open the dashboard and sign in with your Subaru or Toyota account (same credentials as the SubaruConnect / Toyota app)
-2. Toyota NA users: enter the OTP code sent to your email (check spam/junk folder -- codes come from `noreply@subaruconnectedservices.io`)
+2. Toyota NA users: enter the OTP code sent to your email (check spam/junk folder -- codes come from `donotreply@toyotaconnectedservices.com`)
 3. **EU users:** Go to the **Data** tab, set the "From" date to when you got your car and click **Start import**
 4. Wait for the import to finish (about 1 minute per 100 trips)
 5. Go to **Trips** to browse your data, **Statistics** for the overview
@@ -219,7 +219,7 @@ After the initial import, use the **Fetch new trips** button on the Trips tab to
 ## Important notes
 
 - **Tested on a 2023 Subaru Solterra (EU/Germany) and a Toyota bZ4X (NA/US).** Other regions may work but are untested. Feedback welcome.
-- **Toyota NA uses OTP via email for authentication.** The codes arrive from `noreply@subaruconnectedservices.io` (even for Toyota accounts) and may land in your spam folder.
+- **Toyota NA uses OTP via email for authentication.** The codes arrive from `donotreply@toyotaconnectedservices.com` and may land in your spam folder.
 - **Toyota NA does not provide trip or charging history data.** Neither trip logs nor charging session history are available through Toyota's North America API. The Trips, Statistics, and Data tabs are automatically hidden for NA users. Only vehicle status, battery, location, and remote controls are available.
 - **Subaru deletes trip data after approximately 12 months.** This is why local storage matters. Import your data regularly.
 - **The API does not provide kWh consumption per trip.** The endpoints for energy data exist but return 403 (Forbidden) for the Subaru API client.
