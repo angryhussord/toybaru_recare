@@ -39,10 +39,12 @@ So I built a dashboard around it. Import your trips, store them locally (so Suba
 
 **Vehicle Overview**
 - Battery state of charge, range (with and without climate), charging status
+- Battery bar color-coded for EV-optimal range: green (10-80%), yellow (>80%, wear risk), red (<10%, low)
 - Door/window/hatch lock status with open/closed indicators
 - Last known GPS position on a map
 - Remote controls: lock/unlock doors, lock/unlock hatch, headlights on/off, hazard lights on/off, sound horn, buzzer warning, engine start/stop, find vehicle
 - Automatic unit detection (miles/km) based on your region
+- Date/time format adapts to region (MM/DD/YYYY 12h AM/PM for NA, DD/MM/YYYY 24h for EU)
 - Last trip summary with key metrics (EU only -- see note below)
 
 **OTP / Two-Factor Authentication**
@@ -113,6 +115,16 @@ So I built a dashboard around it. Import your trips, store them locally (so Suba
 - Ships with German (de) and English (en)
 - Add more languages by dropping a JSON file into the locales directory
 - Language switcher dropdown, preference saved in browser
+
+**Auto-Sync**
+- Configurable automatic data refresh: Off, 1, 5, 15, 30, or 60 minute intervals
+- Preference saved in browser and persists across sessions
+
+**Brand-Aware Theming**
+- Light and dark mode toggle, saved in browser
+- Theme colors automatically match your brand: Toyota Red or Subaru Blue
+- Inspired by the official Toyota and MySubaru iOS apps
+- Brand is auto-detected from your login, or previewed when selecting a brand on the login screen
 
 **Multi-vehicle**
 - Vehicle switcher in the top bar
