@@ -29,6 +29,12 @@ def log_snapshot(
     """Log a vehicle state snapshot. Skips if nothing changed since last entry."""
     if soc is None:
         return
+    # Normalize charging_status to match DB constraint
+    _cs_map = {"not connected": "none", "not_connected": "none"}
+    if charging_status:
+        charging_status = _cs_map.get(charging_status.lower(), charging_status.lower())
+        if charging_status not in ("none", "charging", "connected"):
+            charging_status = None
     conn = _get_db()
     last = conn.execute(
         "SELECT soc, odometer FROM snapshots WHERE vin = ? ORDER BY timestamp DESC LIMIT 1",

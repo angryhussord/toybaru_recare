@@ -216,10 +216,15 @@ class Api:
             charge_info = data.get("chargeInfo", data)
 
         plug = charge_info.get("plugStatus")
-        if plug == 4:
+        connector = charge_info.get("connectorStatus")
+        remaining = charge_info.get("remainingChargeTime")
+        # Determine charging status from plugStatus + context
+        if plug == 4 or plug == 40:
             charging_status = "charging"
-        elif plug == 12:
+        elif plug == 12 or (plug is not None and connector in (None, 0)):
             charging_status = "not connected"
+        elif connector and connector > 0:
+            charging_status = "connected"
         else:
             charging_status = str(plug) if plug is not None else "unknown"
 
@@ -237,7 +242,6 @@ class Api:
             "plugStatus": plug,
         }
 
-        remaining = charge_info.get("remainingChargeTime")
         if remaining is not None and remaining != 65535:
             result["remainingChargeTime"] = remaining
 

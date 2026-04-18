@@ -579,11 +579,16 @@ function renderBattery(d) {
     <div class="row"><span class="k">${t('battery.range')}</span><span>${range!=null?Math.round(range)+' '+unit:'?'}</span></div>
     <div class="row"><span class="k">${t('battery.range_ac')}</span><span>${rangeAc!=null?Math.round(rangeAc)+' '+unit:'?'}</span></div>
     <div class="row"><span class="k">${t('battery.status')}</span><span>${csMap[cs]||cs}</span></div>
-    ${cs==='charging'&&d.remainingChargeTime?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+    ${cs==='charging'&&d.remainingChargeTime?(()=>{
+      const kw=((100-(pct||0))/100*71.4/(d.remainingChargeTime/60));
+      const lvl=kw>=20?'DC Fast (L3)':kw>=2?'Level 2':'Level 1';
+      const lvlColor=kw>=20?'var(--green)':kw>=2?'var(--accent)':'var(--yellow)';
+      return `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
       <div class="row"><span class="k">${t('battery.full_in')}</span><span>${Math.floor(d.remainingChargeTime/60)}h ${d.remainingChargeTime%60}min</span></div>
       <div class="row"><span class="k">${t('battery.full_at')}</span><span>${new Date(Date.now()+d.remainingChargeTime*60000).toLocaleTimeString(LC,{hour:'2-digit',minute:'2-digit'})}</span></div>
-      <div class="row"><span class="k">${t('battery.charge_rate')}</span><span>${((100-(pct||0))/100*71.4/(d.remainingChargeTime/60)).toFixed(1)} kW</span></div>
-    </div>`:''}
+      <div class="row"><span class="k">${t('battery.charge_rate')}</span><span>${kw.toFixed(1)} kW</span></div>
+      <div class="row"><span class="k">Charger</span><span style="color:${lvlColor};font-weight:600">${lvl}</span></div>
+    </div>`;})():''}
     ${d.lastUpdateTimestamp?`<div class="row"><span class="k">${t('battery.last_update')}</span><span>${fmtDate(d.lastUpdateTimestamp)}</span></div>`:''}
     <div class="meta" id="batRefreshStatus"></div>`;
 }
