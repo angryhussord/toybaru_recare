@@ -208,6 +208,10 @@ class Api:
     async def get_account(self) -> dict[str, Any]:
         return await self.request("GET", VEHICLE_ACCOUNT_ENDPOINT)
 
+    async def get_climate_settings(self, vin: str) -> dict[str, Any]:
+        """Get remote climate settings (temperature, defrost, seat heat, etc.)."""
+        return await self.request("GET", "/v1/global/remote/climate-settings", vin=vin)
+
     @staticmethod
     def _normalize_na_electric(data: dict[str, Any]) -> dict[str, Any]:
         """Normalize NA electric status response to match EU format."""

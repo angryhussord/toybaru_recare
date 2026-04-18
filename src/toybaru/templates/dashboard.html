@@ -571,7 +571,7 @@ async function loadOverview() {
   renderStatus(allData.status);
   renderLocation(allData.location);
   renderEfficiency(allData);
-  renderRemote(allData.vehicle?.remote_capabilities);
+  renderRemote(allData.vehicle?.remote_capabilities, allData.climate_settings);
   renderLastTrip();
   renderBatteryHistory();
   document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString(LC);
@@ -716,10 +716,11 @@ function renderEfficiency(all) {
   el.innerHTML=h;
 }
 
-function renderRemote(remoteCaps) {
+function renderRemote(remoteCaps, climateSettings) {
   const el=document.getElementById('remoteCard');
   let h=`<div class="section-title">${t('remote.title')}</div>`;
   const rc = remoteCaps || {};
+  const cs = climateSettings && !climateSettings.error ? climateSettings : null;
 
   // Map commands to their remote capability flag
   const capMap = {
@@ -778,21 +779,54 @@ function renderRemote(remoteCaps) {
     {cmd:'find-vehicle', icon:'&#128269;', label:t('remote.find_vehicle'), tip:t('remote.find_vehicle')},
   ]);
 
-  // HVAC climate settings from battery data
-  const hvac = allData?.battery?.hvac;
-  if (hvac) {
+  // Climate settings from /v1/global/remote/climate-settings
+  if (cs) {
+    const unit = cs.temperatureUnit || 'F';
+    const temp = cs.temperature;
+    const minT = cs.minTemp || 58;
+    const maxT = cs.maxTemp || 90;
+    const interval = cs.tempInterval || 1;
     h+=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
       <div class="meta" style="margin-bottom:6px;font-weight:600">Climate Settings (on Remote Start)</div>
-      <div class="row"><span class="k">Set Temperature</span><span>${hvac.settingTemperature != null ? hvac.settingTemperature + '\u00B0F' : '?'}</span></div>
-      <div class="row"><span class="k">Blower</span><span>${hvac.blowerOn ? 'On' : 'Off'}</span></div>
-      <div class="row"><span class="k">Front Defogger</span><span>${hvac.frontDefogger ? 'On' : 'Off'}</span></div>
-      <div class="row"><span class="k">Rear Defogger</span><span>${hvac.rearDefogger ? 'On' : 'Off'}</span></div>
-      ${hvac.hvacProhibited ? '<div class="meta" style="margin-top:4px;color:var(--yellow)">Remote climate currently unavailable</div>' : ''}
-    </div>`;
+      <div class="row"><span class="k">Temperature</span><span style="font-weight:600">${temp != null ? temp + '\u00B0' + unit : '?'}</span></div>
+      <div class="row"><span class="k">Range</span><span>${minT}\u00B0 \u2013 ${maxT}\u00B0${unit} (${interval}\u00B0 intervals)</span></div>
+      <div class="meta" style="margin-top:4px;color:var(--yellow)">Remote temperature changes not yet supported on NA API</div>`;
+    // Show available operations
+    const ops = cs.acOperations || [];
+    const availOps = ops.filter(o => o.available);
+    const unavailOps = ops.filter(o => !o.available);
+    if (availOps.length) {
+      h+=`<div style="margin-top:8px">`;
+      for (const op of availOps) {
+        h+=`<div class="row"><span class="k">${op.categoryDisplayName}</span><span style="color:var(--green)">Available</span></div>`;
+        for (const p of (op.acParameters || []).filter(p => p.available)) {
+          h+=`<div class="row" style="padding-left:12px"><span class="k">${p.displayName || p.name}</span><span>${p.enabled ? 'On' : 'Off'}</span></div>`;
+        }
+      }
+      h+=`</div>`;
+    }
+    if (unavailOps.length) {
+      h+=`<div style="margin-top:6px"><div class="meta">Not available: ${unavailOps.map(o => o.categoryDisplayName).join(', ')}</div></div>`;
+    }
+    h+=`</div>`;
+  } else {
+    // Fallback to basic HVAC from battery data
+    const hvac = allData?.battery?.hvac;
+    if (hvac) {
+      h+=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div class="meta" style="margin-bottom:6px;font-weight:600">Climate Settings (on Remote Start)</div>
+        <div class="row"><span class="k">Set Temperature</span><span>${hvac.settingTemperature != null ? hvac.settingTemperature + '\u00B0F' : '?'}</span></div>
+        <div class="row"><span class="k">Blower</span><span>${hvac.blowerOn ? 'On' : 'Off'}</span></div>
+        <div class="row"><span class="k">Front Defogger</span><span>${hvac.frontDefogger ? 'On' : 'Off'}</span></div>
+        <div class="row"><span class="k">Rear Defogger</span><span>${hvac.rearDefogger ? 'On' : 'Off'}</span></div>
+        ${hvac.hvacProhibited ? '<div class="meta" style="margin-top:4px;color:var(--yellow)">Remote climate currently unavailable</div>' : ''}
+      </div>`;
+    }
   }
 
   h+=`<div class="meta" id="remoteStatus" style="margin-top:8px"></div>`;
   el.innerHTML=h;
+
   el.addEventListener('click', function(e) {
     const btn = e.target.closest('[data-cmd]');
     if (btn) sendCommand(btn.dataset.cmd);

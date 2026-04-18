@@ -479,6 +479,11 @@ async def api_all(vin: str, session: str | None = Cookie(None)):
     brand_code = client.auth.region.brand  # "T" or "S"
     brand_name = "toyota" if brand_code == "T" else "subaru"
 
+    # Fetch climate settings (NA only)
+    climate_settings = {}
+    if client.api._is_na:
+        climate_settings = await safe_call(client.api.get_climate_settings(vin))
+
     return {
         "status": status,
         "battery": battery,
@@ -488,6 +493,7 @@ async def api_all(vin: str, session: str | None = Cookie(None)):
         "capabilities": {"trips": not client.api._is_na},
         "brand": brand_name,
         "vehicle": vehicle_info,
+        "climate_settings": climate_settings,
     }
 
 
@@ -502,6 +508,13 @@ async def api_battery(vin: str, session: str | None = Cookie(None)):
 async def api_battery_history(session: str | None = Cookie(None), limit: int = 500):
     await _require_client(session)
     return get_snapshot_history(min(limit, 1000))
+
+
+@app.get("/api/climate-settings/{vin}")
+async def api_climate_settings(vin: str, session: str | None = Cookie(None)):
+    vin = _validate_vin(vin)
+    client = await _require_client(session)
+    return await safe_call(client.api.get_climate_settings(vin))
 
 
 @app.post("/api/refresh/{vin}")
