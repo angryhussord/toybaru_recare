@@ -985,7 +985,7 @@ function renderStatus(d, tel, locData) {
   const locTs=loc?.locationAcquisitionDatetime||locData?.lastTimestamp;
   if(lat&&lon){
     h+=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">`;
-    h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:var(--muted)">📍 ${t('location.title')}</span>`;
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:var(--muted)">${t('location.title')}</span>`;
     if(locTs){
       const ago=Math.round((Date.now()-new Date(locTs).getTime())/60000);
       const agoLabel=ago<1?'just now':ago<60?ago+'m ago':Math.round(ago/60)+'h ago';
