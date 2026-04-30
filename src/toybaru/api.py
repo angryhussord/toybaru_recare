@@ -40,7 +40,7 @@ class Api:
 
     @property
     def _is_na(self) -> bool:
-        return self.auth.region.region == "US"
+        return self.auth.region.region in ("US", "NA")
 
     def _compute_client_ref(self, uuid: str) -> str:
         """Compute x-client-ref HMAC-SHA256."""
@@ -53,12 +53,12 @@ class Api:
             "Authorization": f"Bearer {token}",
             "x-guid": self.auth.uuid,
             "x-brand": self.auth.region.brand,
-            "X-Appbrand": self.auth.region.brand,
+            "X-APPBRAND": self.auth.region.brand,
             "x-channel": "ONEAPP",
             "x-appversion": CLIENT_VERSION,
             "x-api-key": self.auth.region.api_key,
             "x-client-ref": self._compute_client_ref(self.auth.uuid),
-            "x-correlationid": str(uuid4()),
+            "x-correlation-id": str(uuid4()),
             "User-Agent": USER_AGENT,
             "Content-Type": "application/json",
             "datetime": str(int(datetime.now(timezone.utc).timestamp() * 1000)),

@@ -105,12 +105,12 @@ class AuthController:
 
     async def _authenticate(self) -> None:
         """Full 3-stage authentication flow."""
-        self._code_verifier, code_challenge = self._generate_pkce()
         async with make_client(timeout=30, follow_redirects=False) as client:
             # Stage 1: Authenticate
             token_id, cookies = await self._perform_authentication(client)
 
-            # Stage 2: Authorize
+            # Stage 2: Authorize (PKCE generated here, after auth tree completes)
+            self._code_verifier, code_challenge = self._generate_pkce()
             auth_code = await self._perform_authorization(client, token_id, cookies, code_challenge)
 
             # Stage 3: Token exchange
@@ -174,16 +174,26 @@ class AuthController:
                         cb["input"][0]["value"] = self._username
                     elif cb_type == "NameCallback" and prompt in ("Market Locale", "Internationalization", "UI Locales", "ui_locales"):
                         cb["input"][0]["value"] = "en-US"
-                    elif cb_type == "HiddenValueCallback" and cb_id == "devicePrint":
-                        app_id = self.region.redirect_uri.split(":/")[0] if "://" not in self.region.redirect_uri else self.region.redirect_uri.split("://")[0]
-                        device_print = json.dumps({
-                            "appId": app_id,
-                            "deviceType": "Android",
-                            "hardwareId": uuid.uuid4().hex,
-                            "model": "sdk_gphone64_x86_64",
-                            "systemOS": "14",
-                        })
-                        cb["input"][0]["value"] = device_print
+                    elif cb_type == "HiddenValueCallback":
+                        hidden_value = None
+                        if cb.get("output"):
+                            for out in cb["output"]:
+                                if out.get("name") == "value":
+                                    hidden_value = out.get("value")
+                                    break
+                        if hidden_value is not None and cb.get("input"):
+                            cb["input"][0]["value"] = hidden_value
+                        else:
+                            # Fallback: generate device fingerprint for devicePrint callbacks
+                            app_id = self.region.redirect_uri.split(":/")[0] if "://" not in self.region.redirect_uri else self.region.redirect_uri.split("://")[0]
+                            device_print = json.dumps({
+                                "appId": app_id,
+                                "deviceType": "Android",
+                                "hardwareId": uuid.uuid4().hex,
+                                "model": "sdk_gphone64_x86_64",
+                                "systemOS": "14",
+                            })
+                            cb["input"][0]["value"] = device_print
                     elif cb_type == "PasswordCallback" and "One Time Password" in prompt:
                         # OTP required — pause and let caller provide code
                         cookies: list[tuple] = []
@@ -199,7 +209,17 @@ class AuthController:
                     elif cb_type == "PasswordCallback":
                         cb["input"][0]["value"] = self._password
                     elif cb_type == "ChoiceCallback":
-                        cb["input"][0]["value"] = 0
+                        choices = []
+                        if cb.get("output"):
+                            for out in cb["output"]:
+                                if out.get("name") == "choices" and isinstance(out.get("value"), list):
+                                    choices = [str(c).strip().lower() for c in out["value"]]
+                        preferred = None
+                        for pref in ("no-save", "verify otp", "continue", "local"):
+                            if pref in choices:
+                                preferred = choices.index(pref)
+                                break
+                        cb["input"][0]["value"] = preferred if preferred is not None else 0
                     elif cb_type == "ConfirmationCallback":
                         cb["input"][0]["value"] = 0
                     elif cb_type == "TextOutputCallback" and "Not Found" in str(prompt):
@@ -207,6 +227,8 @@ class AuthController:
 
             resp = await client.post(auth_url, json=data, headers=headers)
             if resp.status_code != 200:
+                error_body = resp.text[:500] if resp.text else "(empty)"
+                logger.error("Authentication failed (HTTP %d): %s", resp.status_code, error_body)
                 raise AuthenticationError(f"Authentication failed (HTTP {resp.status_code})")
 
             data = resp.json()
@@ -235,16 +257,17 @@ class AuthController:
                 if "One Time Password" in prompt:
                     cb["input"][0]["value"] = code
 
-        self._code_verifier, code_challenge = self._generate_pkce()
-
         async with make_client(timeout=30, follow_redirects=False) as client:
-            # Restore cookies
-            for name, value, domain, path in saved_cookies:
-                client.cookies.set(name, value, domain=domain)
+            # Restore cookies with domain from auth URL
+            auth_domain = urlparse(auth_url).hostname
+            for name, value, cookie_domain, path in saved_cookies:
+                client.cookies.set(name, value, domain=auth_domain or cookie_domain)
 
             # Continue callback loop (submit OTP)
             resp = await client.post(auth_url, json=data, headers=headers)
             if resp.status_code != 200:
+                error_body = resp.text[:500] if resp.text else "(empty)"
+                logger.error("OTP submission failed (HTTP %d): %s", resp.status_code, error_body)
                 raise AuthenticationError(f"Authentication failed (HTTP {resp.status_code})")
 
             result = resp.json()
@@ -259,6 +282,8 @@ class AuthController:
             for cookie in client.cookies.jar:
                 cookies.append((cookie.name, cookie.value, cookie.domain, cookie.path))
 
+            # PKCE generated after auth tree completes (matches working flow)
+            self._code_verifier, code_challenge = self._generate_pkce()
             auth_code = await self._perform_authorization(client, token_id, cookies, code_challenge)
             token_data = await self._retrieve_tokens(client, auth_code)
             self._update_tokens(token_data)
@@ -273,12 +298,16 @@ class AuthController:
         """Stage 2: Exchange tokenId for authorization code via redirect."""
         if not code_challenge:
             raise ValueError("PKCE code challenge missing")
+        state = _secrets.token_urlsafe(16)
+        nonce = _secrets.token_urlsafe(16)
         authorize_url = (
             f"{self.region.auth_realm}/authorize"
             f"?client_id={self.region.client_id}"
             f"&scope=openid+profile+write"
             f"&response_type=code"
             f"&redirect_uri={self.region.redirect_uri}"
+            f"&state={state}"
+            f"&nonce={nonce}"
             f"&code_challenge={code_challenge}"
             f"&code_challenge_method=S256"
         )
@@ -313,8 +342,6 @@ class AuthController:
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": USER_AGENT,
         }
-        if self.region.basic_auth:
-            token_headers["Authorization"] = f"Basic {self.region.basic_auth}"
 
         token_data = {
             "client_id": self.region.client_id,
@@ -322,6 +349,7 @@ class AuthController:
             "redirect_uri": self.region.redirect_uri,
             "grant_type": "authorization_code",
             "code_verifier": self._code_verifier,
+            "scope": "openid profile write",
         }
 
         if not token_data["code_verifier"]:
@@ -329,6 +357,8 @@ class AuthController:
 
         resp = await client.post(token_url, headers=token_headers, data=token_data)
         if resp.status_code != 200:
+            error_body = resp.text[:500] if resp.text else "(empty)"
+            logger.error("Token exchange failed (HTTP %d): %s", resp.status_code, error_body)
             raise AuthenticationError(f"Token exchange failed (HTTP {resp.status_code})")
 
         return resp.json()
@@ -408,8 +438,15 @@ class AuthController:
         except jwt.exceptions.InvalidTokenError as e:
             raise AuthenticationError(f"Invalid id_token: {e}") from e
 
-        # Fallback through uuid -> extension_tmsguid -> sub
-        user_uuid = claims.get("uuid") or claims.get("extension_tmsguid") or claims.get("sub")
+        # Fallback through uuid -> extension_tmsguid -> sub -> guid -> userGuid -> remoteUserGuid
+        user_uuid = (
+            claims.get("uuid")
+            or claims.get("extension_tmsguid")
+            or claims.get("sub")
+            or claims.get("guid")
+            or claims.get("userGuid")
+            or claims.get("remoteUserGuid")
+        )
         if not user_uuid:
             raise AuthenticationError("No user identifier in id_token")
 
