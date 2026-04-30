@@ -575,6 +575,7 @@ async function doLogin() {
       btn.disabled = false; btn.textContent = t('login.submit');
       return;
     }
+    if (res.status === 429) throw new Error(t('login.rate_limited'));
     if (!res.ok) throw new Error(data.error || t('login.failed'));
     _csrfToken = data.csrf_token || '';
     document.getElementById('loginPw').value = '';

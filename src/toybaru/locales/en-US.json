@@ -42,6 +42,7 @@
     "submit": "Sign In",
     "signing_in": "Signing in...",
     "failed": "Login failed",
+    "rate_limited": "Rate limited: Too many login attempts. Please try again later.",
     "required": "Please sign in first",
     "otp_label": "One-Time Password",
     "otp_sent": "A verification code has been sent to your device",

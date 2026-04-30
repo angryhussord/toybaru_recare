@@ -55,7 +55,7 @@ _DEFAULTS = {
     "subaru-na": RegionConfig(
         name="Subaru NA",
         auth_realm="https://login.subarudriverslogin.com/oauth2/realms/root/realms/tmna-native",
-        api_base_url="https://api.telematicsct.com",
+        api_base_url="https://onecdn.telematicsct.com/oneapi",
         client_id="oneappsdkclient",
         redirect_uri="com.toyota.oneapp:/oauth2Callback",
         basic_auth="b25lYXBwOm9uZWFwcA==",
@@ -64,19 +64,7 @@ _DEFAULTS = {
         region="NA",
         auth_service="",
     ),
-    "toyota-na": RegionConfig(
-        name="Toyota NA",
-        auth_realm="https://login.toyotadriverslogin.com/oauth2/realms/root/realms/tmna-native", # thx to antifort
-        api_base_url="https://api.telematicsct.com",
-        client_id="oneappsdkclient",
-        redirect_uri="com.toyota.oneapp:/oauth2Callback",
-        basic_auth="b25lYXBwOm9uZWFwcA==",
-        api_key="Y1aVonEtOa18cDwNLGTjt1zqD7aLahwc30WvvvQE", # thx to antifort
-        brand="T",
-        region="NA",
-        auth_service="",
-    ),
-    "toyota-eu": RegionConfig(
+   "toyota-eu": RegionConfig(
         name="Toyota EU",
         auth_realm="https://b2c-login.toyota-europe.com/oauth2/realms/root/realms/tme",
         api_base_url="https://ctpa-oneapi.tceu-ctp-prd.toyotaconnectedeurope.io",
@@ -142,7 +130,7 @@ REGIONS = _load_regions()
 
 # Shared constants
 CLIENT_VERSION = "2.19.0"
-USER_AGENT = "okhttp/4.10.0"
+USER_AGENT = "okhttp/4.8.0 XCAPP-SDK/2.06.152 application/com.subaru.oneapp/2.3.1"
 
 # Endpoint paths (EU-style, most complete)
 VEHICLES_ENDPOINT = "/v2/vehicle/guid"
